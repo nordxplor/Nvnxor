@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Tracker</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    video { width: 100%; max-width: 400px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; }
+  </style>
+</head>
+<body>
+
+<h2>Inventory Tracker</h2>
+<video id="preview"></video>
+<input id="itemName" placeholder="Item Name">
+<input id="quantity" type="number" placeholder="Quantity">
+<button onclick="addItem()">Add / Update Item</button>
+
+<table id="inventoryTable">
+  <tr><th>Barcode</th><th>Name</th><th>Quantity</th></tr>
+</table>
+
+<script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script>
+let currentBarcode = "";
+let inventory = JSON.parse(localStorage.getItem('inventory') || '{}');
+
+function refreshTable() {
+  const table = document.getElementById('inventoryTable');
+  table.innerHTML = '<tr><th>Barcode</th><th>Name</th><th>Quantity</th></tr>';
+  for (let code in inventory) {
+    let item = inventory[code];
+    table.innerHTML += `<tr><td>${code}</td><td>${item.name}</td><td>${item.qty}</td></tr>`;
+  }
+}
+
+function addItem() {
+  if (!currentBarcode) return alert("No barcode scanned yet.");
+  let name = document.getElementById('itemName').value;
+  let qty = parseInt(document.getElementById('quantity').value, 10) || 0;
+  inventory[currentBarcode] = { name, qty };
+  localStorage.setItem('inventory', JSON.stringify(inventory));
+  refreshTable();
+}
+
+function onScanSuccess(decodedText) {
+  currentBarcode = decodedText;
+  alert(`Scanned: ${decodedText}`);
+}
+
+function startScanner() {
+  const html5QrCode = new Html5Qrcode("preview");
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    onScanSuccess
+  ).catch(err => console.error(err));
+}
+
+refreshTable();
+startScanner();
+</script>
+</body>
+</html>
